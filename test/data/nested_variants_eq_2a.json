@@ -1,0 +1,17 @@
+{
+    "name": "John Doe",
+    "age": 45,
+    "profession": "Engineer",
+    "birthday": ["05", "06", "1976"],
+    "alive": true,
+    "phones": [
+        {
+            "id": "home",
+            "number": "+39 922876337"
+        },
+        {
+            "id": "mobile",
+            "number": "+44 7333987226"
+        }
+    ]
+}

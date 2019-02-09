@@ -1,0 +1,7 @@
+{
+    "name": "Mike Lennon",
+    "age": 45,
+    "profession": "Engineer",
+    "birthday": ["05", "06", "1976"],
+    "alive": true
+}

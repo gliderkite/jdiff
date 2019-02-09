@@ -94,3 +94,80 @@ fn compare<'a>(val1: &'a Value, val2: &'a Value) -> NodeDiff<'a> {
         _ => NodeDiff::DifferentVariant((val1, val2)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_read_valid_json() {
+        assert!(read_from_file("test/data/basic_variants_eq_1a.json").is_ok());
+        assert!(read_from_file("test/data/basic_variants_eq_1b.json").is_ok());
+        assert!(read_from_file("test/data/basic_variants_diff_1a.json").is_ok());
+        assert!(read_from_file("test/data/basic_variants_diff_1b.json").is_ok());
+        assert!(read_from_file("test/data/basic_variants_diff_1c.json").is_ok());
+        assert!(read_from_file("test/data/basic_variants_diff_1d.json").is_ok());
+        assert!(read_from_file("test/data/basic_variants_diff_1e.json").is_ok());
+        assert!(read_from_file("test/data/basic_variants_diff_1f.json").is_ok());
+        assert!(read_from_file("test/data/basic_variants_diff_1g.json").is_ok());
+    }
+
+    #[test]
+    fn cannot_read_invalid_json() {
+        assert!(read_from_file("test/data/does_not_exist.json").is_err());
+        assert!(read_from_file("test/data/invalid_user.json").is_err());
+    }
+
+    #[test]
+    fn compare_same_basic_variants() {
+        let node1a = read_from_file("test/data/basic_variants_eq_1a.json").unwrap();
+        let node1b = read_from_file("test/data/basic_variants_eq_1b.json").unwrap();
+        assert_eq!(node1a, node1b);
+    }
+
+    #[test]
+    fn compare_different_basic_variants() {
+        let mut nodes = Vec::new();
+        nodes.push(read_from_file("test/data/basic_variants_eq_1a.json").unwrap());
+        nodes.push(read_from_file("test/data/basic_variants_diff_1a.json").unwrap());
+        nodes.push(read_from_file("test/data/basic_variants_diff_1b.json").unwrap());
+        nodes.push(read_from_file("test/data/basic_variants_diff_1c.json").unwrap());
+        nodes.push(read_from_file("test/data/basic_variants_diff_1d.json").unwrap());
+        nodes.push(read_from_file("test/data/basic_variants_diff_1e.json").unwrap());
+        nodes.push(read_from_file("test/data/basic_variants_diff_1f.json").unwrap());
+        nodes.push(read_from_file("test/data/basic_variants_diff_1g.json").unwrap());
+
+        for i in 0..nodes.len() {
+            for j in i + 1..nodes.len() {
+                assert_ne!(nodes[i], nodes[j]);
+            }
+        }
+    }
+
+    #[test]
+    fn compare_same_nested_variants() {
+        let node1a = read_from_file("test/data/nested_variants_eq_1a.json").unwrap();
+        let node1b = read_from_file("test/data/nested_variants_eq_1b.json").unwrap();
+        assert_eq!(node1a, node1b);
+
+        let node2a = read_from_file("test/data/nested_variants_eq_2a.json").unwrap();
+        let node2b = read_from_file("test/data/nested_variants_eq_2b.json").unwrap();
+        assert_eq!(node2a, node2b);
+    }
+
+    #[test]
+    fn compare_different_nested_variants() {
+        let mut nodes = Vec::new();
+        nodes.push(read_from_file("test/data/nested_variants_eq_1a.json").unwrap());
+        nodes.push(read_from_file("test/data/nested_variants_diff_1a.json").unwrap());
+        nodes.push(read_from_file("test/data/nested_variants_diff_1b.json").unwrap());
+        nodes.push(read_from_file("test/data/nested_variants_diff_2a.json").unwrap());
+        nodes.push(read_from_file("test/data/nested_variants_diff_2b.json").unwrap());
+
+        for i in 0..nodes.len() {
+            for j in i + 1..nodes.len() {
+                assert_ne!(nodes[i], nodes[j]);
+            }
+        }
+    }
+}
