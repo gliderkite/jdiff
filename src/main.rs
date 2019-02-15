@@ -11,8 +11,5 @@ fn main() {
         process::exit(1);
     });
     // compare json files
-    if let Err(err) = jdiff::run(config) {
-        eprintln!("Application error: {}.", err);
-        process::exit(1);
-    };
+    jdiff::run(config);
 }

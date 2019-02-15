@@ -1,4 +1,6 @@
 use crossbeam;
+use env_logger;
+use log;
 use serde_json::Value;
 
 use std::cmp;
@@ -10,20 +12,20 @@ use std::io::BufReader;
 use std::path::Path;
 
 /// Compare two JSON files.
-pub fn run(config: Config) -> Result<(), Box<Error>> {
-    print!("Parsing the input JSON files...");
+pub fn run(config: Config) {
+    env_logger::init();
+
+    log::info!("Parsing the input JSON files...");
     let values = parse_json_to_values(&config);
-    println!(" OK");
+    log::info!("Parsing successfully completed.");
 
-    print!("Starting the documents comparison...");
+    log::info!("Starting the documents comparison...");
     let delta = compare_values(&values.0, &values.1);
-    println!(" OK");
+    log::info!("Comparison successfully completed.");
 
-    print!("Writing output delta...");
+    log::info!("Writing output delta...");
     delta.write_sets(&config);
-    println!(" OK");
-
-    Ok(())
+    log::info!("Writing output successfully completed.");
 }
 
 /// Program configuration.

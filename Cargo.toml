@@ -6,4 +6,6 @@ edition = "2018"
 
 [dependencies]
 crossbeam = "0.7.1"
+env_logger = "0.6.0"
+log = "0.4.6"
 serde_json = "1.0"
