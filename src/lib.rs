@@ -1,3 +1,4 @@
+use crossbeam;
 use serde_json::Value;
 
 use std::cmp;
@@ -10,39 +11,65 @@ use std::path::Path;
 
 /// Compare two JSON files.
 pub fn run(config: Config) -> Result<(), Box<Error>> {
-    let val1 = parse_json(config.first_input)?;
-    let val2 = parse_json(config.second_input)?;
+    print!("Parsing the input JSON files...");
+    let values = parse_json_to_values(&config);
+    println!(" OK");
 
-    // compute the delta between the 2 JSON documents
-    let delta = compare_values(&val1, &val2);
+    print!("Starting the documents comparison...");
+    let delta = compare_values(&values.0, &values.1);
+    println!(" OK");
 
-    // write differences
-    delta.write_equal_set(config.output.to_string() + "_eq.json")?;
-    delta.write_delta_to_second_set(config.output.to_string() + "_diff_ab.json")?;
-    delta.write_delta_to_first_set(config.output.to_string() + "_diff_ba.json")?;
+    print!("Writing output delta...");
+    delta.write_sets(&config);
+    println!(" OK");
 
     Ok(())
 }
 
 /// Program configuration.
 pub struct Config<'a> {
-    first_input: &'a String,  // first input filename
-    second_input: &'a String, // second input filename
-    output: &'a String,       // prefix output filename
+    first_input: &'a String,   // first input filename
+    second_input: &'a String,  // second input filename
+    output_prefix: &'a String, // prefix output filename
 }
 
 impl<'a> Config<'a> {
     /// Initializes the program configuration.
     pub fn new(args: &'a [String]) -> Result<Config<'a>, &'static str> {
         if args.len() < 4 {
-            return Err("Invalid number of arguments: <input1> <input2> <output>");
+            return Err("Invalid number of arguments: <input1> <input2> <output_prefix>");
         }
         Ok(Config {
             first_input: &args[1],
             second_input: &args[2],
-            output: &args[3],
+            output_prefix: &args[3],
         })
     }
+}
+
+/// Parse the JSOn files provided by the configuration and returns a tuple of
+/// corresponding `Value`s. Panic if the files cannot be parsed.
+fn parse_json_to_values(config: &Config) -> (Value, Value) {
+    // spawn 2 threads to read the input files
+    crossbeam::scope(|scope| {
+        (
+            scope
+                .spawn(|_| {
+                    parse_json(config.first_input)
+                        .expect(&format!("Unable to parse {}", config.first_input))
+                })
+                .join()
+                .unwrap(),
+            scope
+                .spawn(|_| {
+                    parse_json(config.second_input)
+                        .expect(&format!("Unable to parse {}", config.second_input))
+                })
+                .join()
+                .unwrap(),
+        )
+    })
+    .expect("Unable to join the reading threads")
 }
 
 /// Parse a JSON file.
@@ -120,6 +147,29 @@ impl<'a> Delta<'a> {
         }
     }
 
+    /// Writes the output sets.
+    fn write_sets(&self, config: &Config) {
+        // spawn 3 threads to write the deltas
+        crossbeam::scope(|scope| {
+            scope.spawn(|_| {
+                self.write_equal_set(config.output_prefix.to_string() + "_eq.json")
+                    .expect("Unable to write the equal set")
+            });
+            scope.spawn(|_| {
+                self.write_delta_to_second_set(config.output_prefix.to_string() + "_diff_ab.json")
+                    .expect("Unable to write the delta to second set")
+            });
+            scope.spawn(|_| {
+                self.write_delta_to_first_set(config.output_prefix.to_string() + "_diff_ba.json")
+                    .expect("Unable to write the delta to first set")
+            });
+
+            //let res = eq_handle.join().expect("Unable to join eq thread");
+            //println!("{:?}", res);
+        })
+        .expect("Unable to join the spawned writing threads");
+    }
+
     /// Writes the given delta to the given output file according to the given
     /// filter logic.
     fn write_delta<P, F>(&self, output: P, filter: &F) -> Result<(), Box<Error>>
@@ -180,7 +230,7 @@ impl<'a> Delta<'a> {
     }
 }
 
-/// Compare two JSON nodes.
+/// Compare two JSON nodes and returns their `Delta`.
 fn compare_values<'a>(val1: &'a Value, val2: &'a Value) -> Delta<'a> {
     match (val1, val2) {
         (Value::Null, Value::Null) => Delta::Equal(val1),
@@ -190,8 +240,8 @@ fn compare_values<'a>(val1: &'a Value, val2: &'a Value) -> Delta<'a> {
         (Value::Array(ref v1), Value::Array(ref v2)) => {
             // comparison where the "key" is the index of the nodes in the array
             let mut v = Vec::with_capacity(cmp::max(v1.len(), v2.len()));
-            for (val1, val2) in v1.iter().zip(v2.iter()) {
-                let diff = compare_values(val1, val2);
+            for (v1, v2) in v1.iter().zip(v2.iter()) {
+                let diff = compare_values(v1, v2);
                 v.push(diff);
             }
             let missing_in_second = v1.len() > v2.len();
