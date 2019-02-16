@@ -5,12 +5,13 @@ A simple and fast JSON comparison CLI utility.
 ## Overview
 
 `jdiff` is a basic JSON comparison utility written in `Rust` that, given two input
-JSON files, outputs three different files containing the delta (JSON node
+JSON files, outputs three different JSON files containing the delta (JSON node
 differences) between the input files.
 `jdiff` is built on top of [serde_json](https://docs.serde.rs/serde_json/index.html) 
 for the JSON parsing and output serialization, allowing
 [great performance](https://github.com/serde-rs/json-benchmark) (this utility
-itself has been optimized for speed).
+itself has been optimized for speed - if you need to parse huge files and
+optimize for minimal memory usage this utility may not be for you).
 
 The output of `jdiff` consist in three different files:
 - `<output_prefix>_eq.json`: Contains only the JSON nodes that are equal between
