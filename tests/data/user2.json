@@ -1,0 +1,23 @@
+{
+    "name": "Rupert Wesley",
+    "banned": true,
+    "age": 45,
+    "profession": "<unknown>",
+    "address": [
+      "4 Ferry Road",
+      "T236GF",
+      "Liverpool",
+      "UK"
+    ],
+    "phones": [
+      {
+        "id": "home",
+        "number": "+44 6557834552"
+      },
+      {
+        "id": "mobile",
+        "number": "+44 8775345662"
+      }
+    ],
+    "user2": true
+  }

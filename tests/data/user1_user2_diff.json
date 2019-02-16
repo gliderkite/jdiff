@@ -1,0 +1,41 @@
+{
+  "address": [
+    [
+      "54 Old Street",
+      "4 Ferry Road"
+    ],
+    [
+      "R563SW",
+      "T236GF"
+    ],
+    [
+      "Rome",
+      "Liverpool"
+    ],
+    [
+      "US",
+      "UK"
+    ]
+  ],
+  "banned": [
+    false,
+    true
+  ],
+  "name": [
+    "John Doe",
+    "Rupert Wesley"
+  ],
+  "phones": [
+    {
+      "number": [
+        "+44 463829992",
+        "+44 8775345662"
+      ]
+    }
+  ],
+  "profession": [
+    "Engineer",
+    "<unknown>"
+  ],
+  "user1": true
+}

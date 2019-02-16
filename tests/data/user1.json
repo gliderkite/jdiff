@@ -1,0 +1,23 @@
+{
+    "name": "John Doe",
+    "banned": false,
+    "age": 45,
+    "profession": "Engineer",
+    "address": [
+      "54 Old Street",
+      "R563SW",
+      "Rome",
+      "US"
+    ],
+    "phones": [
+      {
+        "id": "home",
+        "number": "+44 6557834552"
+      },
+      {
+        "id": "mobile",
+        "number": "+44 463829992"
+      }
+    ],
+    "user1": true
+  }

@@ -1,5 +1,4 @@
 use crossbeam;
-use env_logger;
 use log;
 use serde_json::Value;
 
@@ -13,8 +12,6 @@ use std::path::Path;
 
 /// Compare two JSON files.
 pub fn run(config: Config) {
-    env_logger::init();
-
     log::info!("Parsing the input JSON files...");
     let values = parse_json_to_values(&config);
     log::info!("Parsing successfully completed.");
@@ -30,9 +27,9 @@ pub fn run(config: Config) {
 
 /// Program configuration.
 pub struct Config<'a> {
-    first_input: &'a String,   // first input filename
-    second_input: &'a String,  // second input filename
-    output_prefix: &'a String, // prefix output filename
+    first_input: &'a str,   // first input filename
+    second_input: &'a str,  // second input filename
+    output_prefix: &'a str, // prefix output filename
 }
 
 impl<'a> Config<'a> {
@@ -75,7 +72,7 @@ fn parse_json_to_values(config: &Config) -> (Value, Value) {
 }
 
 /// Parse a JSON file.
-fn parse_json<P: AsRef<Path>>(path: P) -> Result<Value, Box<Error>> {
+pub fn parse_json<P: AsRef<Path>>(path: P) -> Result<Value, Box<Error>> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
     let val: Value = serde_json::from_reader(reader)?;
@@ -105,17 +102,17 @@ impl<'a> Delta<'a> {
 
     /// Parse the given delta and filter according with the given filter logic.
     /// Returns a `Value` that can be serialized into a JSON file.
-    fn to_value<F>(&self, filter_node: &F) -> Value
+    fn to_value<F>(&self, filter: &F) -> Value
     where
         F: Fn(&Delta<'a>) -> Option<Value>,
     {
-        match filter_node(self) {
+        match filter(self) {
             Some(val) => val,
             None => match self {
                 Delta::List(list) => {
                     let mut array = Vec::with_capacity(list.len());
                     for delta in list.iter() {
-                        let diff = delta.to_value(filter_node);
+                        let diff = delta.to_value(filter);
                         match diff {
                             Value::Null => (),
                             _ => array.push(diff),
@@ -130,7 +127,7 @@ impl<'a> Delta<'a> {
                 Delta::Map(map) => {
                     let mut object = serde_json::Map::with_capacity(map.len());
                     for (key, delta) in map.iter() {
-                        let diff = delta.to_value(filter_node);
+                        let diff = delta.to_value(filter);
                         match diff {
                             Value::Null => (),
                             _ => {
@@ -292,49 +289,49 @@ mod tests {
 
     #[test]
     fn can_read_valid_json() {
-        assert!(parse_json("test/data/basic_variants_eq_1a.json").is_ok());
-        assert!(parse_json("test/data/basic_variants_eq_1b.json").is_ok());
-        assert!(parse_json("test/data/basic_variants_diff_1a.json").is_ok());
-        assert!(parse_json("test/data/basic_variants_diff_1b.json").is_ok());
-        assert!(parse_json("test/data/basic_variants_diff_1c.json").is_ok());
-        assert!(parse_json("test/data/basic_variants_diff_1d.json").is_ok());
-        assert!(parse_json("test/data/basic_variants_diff_1e.json").is_ok());
-        assert!(parse_json("test/data/basic_variants_diff_1f.json").is_ok());
-        assert!(parse_json("test/data/basic_variants_diff_1g.json").is_ok());
-        assert!(parse_json("test/data/nested_variants_eq_1a.json").is_ok());
-        assert!(parse_json("test/data/nested_variants_eq_1b.json").is_ok());
-        assert!(parse_json("test/data/nested_variants_eq_2a.json").is_ok());
-        assert!(parse_json("test/data/nested_variants_eq_2b.json").is_ok());
-        assert!(parse_json("test/data/nested_variants_diff_1a.json").is_ok());
-        assert!(parse_json("test/data/nested_variants_diff_1b.json").is_ok());
-        assert!(parse_json("test/data/nested_variants_diff_2a.json").is_ok());
-        assert!(parse_json("test/data/nested_variants_diff_2b.json").is_ok());
+        assert!(parse_json("tests/data/basic_variants_eq_1a.json").is_ok());
+        assert!(parse_json("tests/data/basic_variants_eq_1b.json").is_ok());
+        assert!(parse_json("tests/data/basic_variants_diff_1a.json").is_ok());
+        assert!(parse_json("tests/data/basic_variants_diff_1b.json").is_ok());
+        assert!(parse_json("tests/data/basic_variants_diff_1c.json").is_ok());
+        assert!(parse_json("tests/data/basic_variants_diff_1d.json").is_ok());
+        assert!(parse_json("tests/data/basic_variants_diff_1e.json").is_ok());
+        assert!(parse_json("tests/data/basic_variants_diff_1f.json").is_ok());
+        assert!(parse_json("tests/data/basic_variants_diff_1g.json").is_ok());
+        assert!(parse_json("tests/data/nested_variants_eq_1a.json").is_ok());
+        assert!(parse_json("tests/data/nested_variants_eq_1b.json").is_ok());
+        assert!(parse_json("tests/data/nested_variants_eq_2a.json").is_ok());
+        assert!(parse_json("tests/data/nested_variants_eq_2b.json").is_ok());
+        assert!(parse_json("tests/data/nested_variants_diff_1a.json").is_ok());
+        assert!(parse_json("tests/data/nested_variants_diff_1b.json").is_ok());
+        assert!(parse_json("tests/data/nested_variants_diff_2a.json").is_ok());
+        assert!(parse_json("tests/data/nested_variants_diff_2b.json").is_ok());
     }
 
     #[test]
     fn cannot_read_invalid_json() {
-        assert!(parse_json("test/data/does_not_exist.json").is_err());
-        assert!(parse_json("test/data/invalid_user.json").is_err());
+        assert!(parse_json("tests/data/does_not_exist.json").is_err());
+        assert!(parse_json("tests/data/invalid_user.json").is_err());
     }
 
     #[test]
     fn compare_same_basic_variants() {
-        let node1a = parse_json("test/data/basic_variants_eq_1a.json").unwrap();
-        let node1b = parse_json("test/data/basic_variants_eq_1b.json").unwrap();
+        let node1a = parse_json("tests/data/basic_variants_eq_1a.json").unwrap();
+        let node1b = parse_json("tests/data/basic_variants_eq_1b.json").unwrap();
         assert_eq!(node1a, node1b);
     }
 
     #[test]
     fn compare_different_basic_variants() {
         let mut nodes = Vec::new();
-        nodes.push(parse_json("test/data/basic_variants_eq_1a.json").unwrap());
-        nodes.push(parse_json("test/data/basic_variants_diff_1a.json").unwrap());
-        nodes.push(parse_json("test/data/basic_variants_diff_1b.json").unwrap());
-        nodes.push(parse_json("test/data/basic_variants_diff_1c.json").unwrap());
-        nodes.push(parse_json("test/data/basic_variants_diff_1d.json").unwrap());
-        nodes.push(parse_json("test/data/basic_variants_diff_1e.json").unwrap());
-        nodes.push(parse_json("test/data/basic_variants_diff_1f.json").unwrap());
-        nodes.push(parse_json("test/data/basic_variants_diff_1g.json").unwrap());
+        nodes.push(parse_json("tests/data/basic_variants_eq_1a.json").unwrap());
+        nodes.push(parse_json("tests/data/basic_variants_diff_1a.json").unwrap());
+        nodes.push(parse_json("tests/data/basic_variants_diff_1b.json").unwrap());
+        nodes.push(parse_json("tests/data/basic_variants_diff_1c.json").unwrap());
+        nodes.push(parse_json("tests/data/basic_variants_diff_1d.json").unwrap());
+        nodes.push(parse_json("tests/data/basic_variants_diff_1e.json").unwrap());
+        nodes.push(parse_json("tests/data/basic_variants_diff_1f.json").unwrap());
+        nodes.push(parse_json("tests/data/basic_variants_diff_1g.json").unwrap());
 
         for i in 0..nodes.len() {
             for j in i + 1..nodes.len() {
@@ -345,23 +342,23 @@ mod tests {
 
     #[test]
     fn compare_same_nested_variants() {
-        let node1a = parse_json("test/data/nested_variants_eq_1a.json").unwrap();
-        let node1b = parse_json("test/data/nested_variants_eq_1b.json").unwrap();
+        let node1a = parse_json("tests/data/nested_variants_eq_1a.json").unwrap();
+        let node1b = parse_json("tests/data/nested_variants_eq_1b.json").unwrap();
         assert_eq!(node1a, node1b);
 
-        let node2a = parse_json("test/data/nested_variants_eq_2a.json").unwrap();
-        let node2b = parse_json("test/data/nested_variants_eq_2b.json").unwrap();
+        let node2a = parse_json("tests/data/nested_variants_eq_2a.json").unwrap();
+        let node2b = parse_json("tests/data/nested_variants_eq_2b.json").unwrap();
         assert_eq!(node2a, node2b);
     }
 
     #[test]
     fn compare_different_nested_variants() {
         let mut nodes = Vec::new();
-        nodes.push(parse_json("test/data/nested_variants_eq_1a.json").unwrap());
-        nodes.push(parse_json("test/data/nested_variants_diff_1a.json").unwrap());
-        nodes.push(parse_json("test/data/nested_variants_diff_1b.json").unwrap());
-        nodes.push(parse_json("test/data/nested_variants_diff_2a.json").unwrap());
-        nodes.push(parse_json("test/data/nested_variants_diff_2b.json").unwrap());
+        nodes.push(parse_json("tests/data/nested_variants_eq_1a.json").unwrap());
+        nodes.push(parse_json("tests/data/nested_variants_diff_1a.json").unwrap());
+        nodes.push(parse_json("tests/data/nested_variants_diff_1b.json").unwrap());
+        nodes.push(parse_json("tests/data/nested_variants_diff_2a.json").unwrap());
+        nodes.push(parse_json("tests/data/nested_variants_diff_2b.json").unwrap());
 
         for i in 0..nodes.len() {
             for j in i + 1..nodes.len() {
