@@ -162,9 +162,6 @@ impl<'a> Delta<'a> {
                 self.write_delta_to_first_set(config.output_prefix.to_string() + "_diff_ba.json")
                     .expect("Unable to write the delta to first set")
             });
-
-            //let res = eq_handle.join().expect("Unable to join eq thread");
-            //println!("{:?}", res);
         })
         .expect("Unable to join the spawned writing threads");
     }
