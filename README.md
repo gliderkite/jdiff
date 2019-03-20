@@ -1,6 +1,8 @@
 # jdiff
 A simple and fast JSON comparison CLI utility.
 
+[![Build Status](https://travis-ci.com/gliderkite/jdiff.svg?branch=master)](https://travis-ci.com/gliderkite/jdiff)
+
 
 ## Overview
 
